@@ -17,6 +17,7 @@ namespace GetSecretFromKeyVaultViaRest
             var authToken = GetAzureBearerJwtToken();
             string keyValue = GetSecret(authToken, Config.SecretName);
 
+            Console.WriteLine($"The value of secret '{Config.SecretName}' is : -");
             Console.WriteLine(keyValue);
         }
 
