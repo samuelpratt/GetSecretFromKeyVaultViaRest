@@ -1,5 +1,0 @@
-packages
-*\bin
-*\obj
-GetSecretFromKeyVaultViaRest\cert.p12
-GetSecretFromKeyVaultViaRest\secrets.config
