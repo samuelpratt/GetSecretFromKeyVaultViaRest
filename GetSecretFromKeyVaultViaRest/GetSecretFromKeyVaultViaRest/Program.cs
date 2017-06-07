@@ -47,7 +47,7 @@ namespace GetSecretFromKeyVaultViaRest
             //Build the request
             var content = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("resource", "https://vault.azure.net"),
+                new KeyValuePair<string, string>("resource", "https://vault.azure.net"), //Note the lack of trailing '/'
                 new KeyValuePair<string, string>("client_id", Config.AppClientId),
                 new KeyValuePair<string, string>("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
                 new KeyValuePair<string, string>("grant_type", "client_credentials"),
