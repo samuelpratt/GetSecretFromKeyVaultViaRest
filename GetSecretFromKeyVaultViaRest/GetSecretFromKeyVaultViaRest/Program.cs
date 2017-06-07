@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using Jose;
 using Newtonsoft.Json.Linq;
 
@@ -14,35 +15,41 @@ namespace GetSecretFromKeyVaultViaRest
 
         public static void Main(string[] argv)
         {
-            var authToken = GetAzureBearerJwtToken();
-            string keyValue = GetSecret(authToken, Config.SecretName);
+            var secret = GetSecretAync(Config.SecretName);
+            secret.Wait();
+            var keyValue = secret.Result;
 
             Console.WriteLine($"The value of secret '{Config.SecretName}' is : -");
             Console.WriteLine(keyValue);
+
         }
 
-        private static string GetSecret(string authToken, string secretName)
+        private static async Task<string> GetSecretAync(string secretName)
+        {
+            var authToken = await GetAzureBearerJwtToken();
+            var keyValue = await GetSecret(authToken, Config.SecretName);
+            return keyValue;
+        }
+
+        private static async Task<string> GetSecret(string authToken, string secretName)
         {
             //Build Request
             var httpClient = new HttpClient();
             var requestMessage = new HttpRequestMessage(HttpMethod.Get,
                 $"https://{Config.KeyVaultName}.vault.azure.net/secrets/{secretName}/?api-version=2016-10-01");
             requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
-            var responseTask = httpClient.SendAsync(requestMessage);
+            var response = await httpClient.SendAsync(requestMessage);
 
             //Send Request
-            responseTask.Wait();
-            var response = responseTask.Result;
-            var responseBodyTask = response.Content.ReadAsStringAsync();
-            responseBodyTask.Wait();
+            var responseBody = await response.Content.ReadAsStringAsync();
 
             //Extract the Key from the response
-            dynamic d = JObject.Parse(responseBodyTask.Result);
+            dynamic d = JObject.Parse(responseBody);
             string keyValue = d.value;
             return keyValue;
         }
 
-        private static string GetAzureBearerJwtToken()
+        private static async Task<string> GetAzureBearerJwtToken()
         {
 
             //Build the request
@@ -57,15 +64,13 @@ namespace GetSecretFromKeyVaultViaRest
 
             //Send the request
             var httpClient = new HttpClient();
-            var authRequest = httpClient.PostAsync($"https://login.windows.net/{Config.TenantId}/oauth2/token", content);
-            authRequest.Wait();
-            var result = authRequest.Result;
-            result.EnsureSuccessStatusCode();
-            var responseBodyTask = result.Content.ReadAsStringAsync();
-            responseBodyTask.Wait();
+            var authResult = await httpClient.PostAsync($"https://login.windows.net/{Config.TenantId}/oauth2/token", content);
+
+            authResult.EnsureSuccessStatusCode();
+            var responseBody = await authResult.Content.ReadAsStringAsync();
 
             //Extract the Bearer JWT Token
-            dynamic d = JObject.Parse(responseBodyTask.Result);
+            dynamic d = JObject.Parse(responseBody);
             string authToken = d.access_token;
             return authToken;
         }
