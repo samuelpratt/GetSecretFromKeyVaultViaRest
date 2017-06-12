@@ -89,9 +89,12 @@ namespace GetSecretFromKeyVaultViaRest
 
             };
 
+            var certHash = certificate.GetCertHash();
+            string certHashString = certHash.ToString();
+
             var extraHeaders = new Dictionary<string, object>()
             {
-                { "x5t",  Convert.ToBase64String(certificate.GetCertHash()) } //x5t Header: http://self-issued.info/docs/draft-jones-json-web-token-01.html#ReservedHeaderParameterName
+                { "x5t",  Convert.ToBase64String(certHash) } //x5t Header: http://self-issued.info/docs/draft-jones-json-web-token-01.html#ReservedHeaderParameterName
             };
 
             return JWT.Encode(payload, privateKey, JwsAlgorithm.RS256, extraHeaders);
